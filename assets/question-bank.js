@@ -29,6 +29,7 @@
     {
       id: 'work-03',
       category: 'work',
+      categoryLabel: '职场黑话',
       stem: '“我们要给一线团队赋能。”这句话最像在说？',
       options: [
         { text: '提供工具、资源或方法，让他们更容易完成目标', score: 10, feedback: '赋能的核心是补工具、资源和能力，不是喊口号。' },
@@ -41,6 +42,7 @@
     {
       id: 'work-04',
       category: 'work',
+      categoryLabel: '职场黑话',
       stem: '产品经理说“这次评审要把颗粒度拉齐”，最可能想解决什么？',
       options: [
         { text: '让大家讨论问题时处在相近的细节层级', score: 10, feedback: '颗粒度说的是细节粗细，不是会议室空调温度。' },
@@ -66,6 +68,7 @@
     {
       id: 'internet-02',
       category: 'internet',
+      categoryLabel: '网络梗',
       stem: '看到别人说“我的 CPU 烧了”，更可能是在说？',
       options: [
         { text: '信息量太大，一时处理不过来', score: 10, feedback: '这里的 CPU 是脑子，烧的是处理能力。' },
@@ -91,6 +94,7 @@
     {
       id: 'context-02',
       category: 'context',
+      categoryLabel: '语境判断',
       stem: '下面哪句话最像“说了很多，但没有给行动项”？',
       options: [
         { text: '我们要持续夯实基础，全面提升协同效率', score: 10, feedback: '听起来方向正确，但没有说明谁在什么时候做什么。' },
@@ -116,6 +120,7 @@
     {
       id: 'translation-02',
       category: 'translation',
+      categoryLabel: '反黑话翻译',
       stem: '“我们先小步快跑，沉淀可复用的方法论。”最靠谱的翻译是？',
       options: [
         { text: '先做一个小版本，用结果总结出以后能重复使用的做法', score: 10, feedback: '这次把速度、范围和沉淀都说清楚了。' },

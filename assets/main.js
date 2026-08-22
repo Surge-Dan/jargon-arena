@@ -39,15 +39,26 @@
       explanationList: document.querySelector('#explanation-list'),
     };
 
+    const missingElements = Object.entries(elements)
+      .filter(([, element]) => !element)
+      .map(([name]) => name);
+
+    if (missingElements.length) {
+      showFatalError('页面结构不完整，请重新打开。');
+      return;
+    }
+
     const state = {
       currentIndex: 0,
       answers: [],
+      questions: [],
       selectedOptionIndex: null,
     };
 
     function resetState() {
       state.currentIndex = 0;
       state.answers = [];
+      state.questions = core.createSessionQuestionBank(questionBank, Date.now() + Math.floor(Math.random() * 1000000));
       state.selectedOptionIndex = null;
     }
 
@@ -66,13 +77,15 @@
     }
 
     function renderQuestion() {
-      const question = questionBank[state.currentIndex];
+      const question = state.questions[state.currentIndex];
       const currentNumber = state.currentIndex + 1;
       const progress = (currentNumber / questionBank.length) * 100;
 
       elements.questionCategory.textContent = question.categoryLabel || '语境判断';
       elements.questionCounter.textContent = `${String(currentNumber).padStart(2, '0')} / ${questionBank.length}`;
       elements.progressFill.style.width = `${progress}%`;
+      elements.progressFill.parentElement.setAttribute('aria-valuenow', String(currentNumber));
+      elements.progressFill.parentElement.setAttribute('aria-valuetext', `第 ${currentNumber} 题，共 ${questionBank.length} 题`);
       elements.quizTitle.textContent = question.stem;
       elements.optionsList.replaceChildren();
       elements.answerFeedback.textContent = '';
@@ -89,6 +102,7 @@
         button.className = 'option-button';
         button.setAttribute('role', 'radio');
         button.setAttribute('aria-checked', 'false');
+        button.tabIndex = index === 0 ? 0 : -1;
         button.dataset.optionIndex = String(index);
 
         key.className = 'option-key';
@@ -97,12 +111,33 @@
 
         button.append(key, text);
         button.addEventListener('click', () => selectOption(index));
+        button.addEventListener('keydown', (event) => {
+          const keyToOffset = {
+            ArrowDown: 1,
+            ArrowRight: 1,
+            ArrowUp: -1,
+            ArrowLeft: -1,
+          };
+
+          if (event.key === 'Home' || event.key === 'End') {
+            event.preventDefault();
+            const targetIndex = event.key === 'Home' ? 0 : question.options.length - 1;
+            selectOption(targetIndex, true);
+            return;
+          }
+
+          if (!(event.key in keyToOffset)) return;
+
+          event.preventDefault();
+          const targetIndex = (index + keyToOffset[event.key] + question.options.length) % question.options.length;
+          selectOption(targetIndex, true);
+        });
         elements.optionsList.append(button);
       });
     }
 
-    function selectOption(index) {
-      const question = questionBank[state.currentIndex];
+    function selectOption(index, focusButton = false) {
+      const question = state.questions[state.currentIndex];
       const option = question.options[index];
       const buttons = Array.from(elements.optionsList.querySelectorAll('.option-button'));
 
@@ -111,7 +146,10 @@
         const selected = buttonIndex === index;
         button.classList.toggle('is-selected', selected);
         button.setAttribute('aria-checked', String(selected));
+        button.tabIndex = selected ? 0 : -1;
       });
+
+      if (focusButton) buttons[index].focus();
 
       elements.answerFeedback.textContent = option.feedback;
       elements.answerFeedback.classList.add('is-visible');
@@ -120,8 +158,12 @@
     }
 
     function recordAnswer() {
-      const question = questionBank[state.currentIndex];
+      if (state.answers.length !== state.currentIndex || state.selectedOptionIndex === null) return false;
+
+      const question = state.questions[state.currentIndex];
       const option = question.options[state.selectedOptionIndex];
+
+      if (!option) return false;
 
       state.answers.push({
         questionId: question.id,
@@ -130,12 +172,17 @@
         optionText: option.text,
         score: option.score,
       });
+
+      return true;
     }
 
     function goToNextQuestion() {
       if (state.selectedOptionIndex === null) return;
 
-      recordAnswer();
+      elements.nextButton.disabled = true;
+
+      if (!recordAnswer()) return;
+      state.selectedOptionIndex = null;
 
       if (state.currentIndex === questionBank.length - 1) {
         renderResult();
@@ -144,7 +191,6 @@
       }
 
       state.currentIndex += 1;
-      state.selectedOptionIndex = null;
       renderQuestion();
     }
 
@@ -179,13 +225,17 @@
       state.answers.forEach((answer, index) => {
         const item = document.createElement('article');
         const meta = document.createElement('div');
+        const questionNumber = document.createElement('span');
+        const questionScore = document.createElement('span');
         const title = document.createElement('h3');
         const selected = document.createElement('p');
         const explanation = document.createElement('p');
 
         item.className = 'explanation-item';
         meta.className = 'explanation-meta';
-        meta.innerHTML = `<span>Q${String(index + 1).padStart(2, '0')}</span><span>${answer.score} / 10</span>`;
+        questionNumber.textContent = `Q${String(index + 1).padStart(2, '0')}`;
+        questionScore.textContent = `${answer.score} / 10`;
+        meta.append(questionNumber, questionScore);
         title.textContent = answer.question.stem;
         selected.textContent = `你的选择：${answer.optionText}`;
         explanation.textContent = `人话解析：${answer.question.explanation}`;
@@ -221,7 +271,20 @@
     const app = document.querySelector('#app');
     if (!app) return;
 
-    app.innerHTML = `<section class="screen screen-error is-active"><p class="section-label">工具状态</p><h1>页面暂时打不开</h1><p class="intro-lede">${message}</p></section>`;
+    const section = document.createElement('section');
+    const label = document.createElement('p');
+    const title = document.createElement('h1');
+    const description = document.createElement('p');
+
+    section.className = 'screen screen-error is-active';
+    section.setAttribute('role', 'alert');
+    label.className = 'section-label';
+    label.textContent = '工具状态';
+    title.textContent = '页面暂时打不开';
+    description.className = 'intro-lede';
+    description.textContent = message;
+    section.append(label, title, description);
+    app.replaceChildren(section);
   }
 
   if (document.readyState === 'loading') {

@@ -65,6 +65,8 @@
     context: '语境敏感',
   };
 
+  const QUESTION_COUNT = 10;
+
   function calculateScore(answers) {
     if (!Array.isArray(answers)) return 0;
 
@@ -81,33 +83,46 @@
 
   function getResultTags(answers) {
     const totals = {};
+    const counts = {};
 
     (Array.isArray(answers) ? answers : []).forEach((answer) => {
       if (!answer || !TAGS[answer.category]) return;
       totals[answer.category] = (totals[answer.category] || 0) + (Number(answer.score) || 0);
+      counts[answer.category] = (counts[answer.category] || 0) + 1;
     });
 
     return Object.keys(TAGS)
       .filter((category) => totals[category])
-      .sort((left, right) => totals[right] - totals[left] || Object.keys(TAGS).indexOf(left) - Object.keys(TAGS).indexOf(right))
+      .sort((left, right) => {
+        const averageDifference = (totals[right] / counts[right]) - (totals[left] / counts[left]);
+        return averageDifference || totals[right] - totals[left] || Object.keys(TAGS).indexOf(left) - Object.keys(TAGS).indexOf(right);
+      })
       .slice(0, 3)
       .map((category) => TAGS[category]);
   }
 
   function validateQuestionBank(bank) {
-    if (!Array.isArray(bank) || bank.length === 0) {
-      throw new Error('题库格式无效');
+    if (!Array.isArray(bank) || bank.length !== QUESTION_COUNT) {
+      throw new Error(`题库必须包含 ${QUESTION_COUNT} 道题`);
     }
 
+    const questionIds = new Set();
     bank.forEach((question) => {
-      if (!question || !question.id || !question.stem || !question.category) {
+      if (!question || !question.id || !question.stem || !question.category || !question.categoryLabel) {
         throw new Error('题目基础信息不完整');
       }
+
+      if (questionIds.has(question.id)) {
+        throw new Error(`题目 ID 重复：${question.id}`);
+      }
+
+      questionIds.add(question.id);
 
       if (
         !Array.isArray(question.options) ||
         question.options.length !== 4 ||
-        question.options.some((option) => !option || !option.text || !Number.isFinite(option.score) || option.score < 0 || option.score > 10)
+        question.options.some((option) => !option || !option.text || !Number.isFinite(option.score) || option.score < 0 || option.score > 10) ||
+        new Set(question.options.map((option) => option.text)).size !== 4
       ) {
         throw new Error(`题目 ${question.id} 的选项配置无效`);
       }
@@ -120,10 +135,33 @@
     return true;
   }
 
+  function createSessionQuestionBank(bank, seed = Date.now()) {
+    validateQuestionBank(bank);
+
+    let randomState = (Number(seed) >>> 0) || 1;
+    const random = () => {
+      randomState = (randomState * 1664525 + 1013904223) >>> 0;
+      return randomState / 4294967296;
+    };
+
+    return bank.map((question) => {
+      const options = question.options.map((option) => ({ ...option }));
+
+      for (let index = options.length - 1; index > 0; index -= 1) {
+        const swapIndex = Math.floor(random() * (index + 1));
+        [options[index], options[swapIndex]] = [options[swapIndex], options[index]];
+      }
+
+      return { ...question, options };
+    });
+  }
+
   return {
     LEVELS,
     TAGS,
+    QUESTION_COUNT,
     calculateScore,
+    createSessionQuestionBank,
     getLevel,
     getResultTags,
     validateQuestionBank,
