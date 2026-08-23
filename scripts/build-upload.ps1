@@ -1,12 +1,15 @@
 [CmdletBinding()]
 param(
-  [string]$OutputPath = (Join-Path (Split-Path -Parent $PSScriptRoot) '..\jargon-arena-upload.zip')
+  [string]$OutputPath
 )
 
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $repoRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+if ([string]::IsNullOrWhiteSpace($OutputPath)) {
+  $OutputPath = Join-Path $repoRoot '..\jargon-arena-upload.zip'
+}
 $resolvedOutput = [IO.Path]::GetFullPath($OutputPath)
 $stagingPath = Join-Path ([IO.Path]::GetTempPath()) ('jargon-arena-upload-' + [guid]::NewGuid().ToString('N'))
 

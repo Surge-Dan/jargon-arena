@@ -3,114 +3,183 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#24231f" />
-    <title>黑话段位局｜互联网黑话测试</title>
+    <meta name="theme-color" content="#222421" />
+    <title>黑话段位局｜互联网黑话通关测评</title>
     <link rel="stylesheet" href="./assets/style.css" />
     <script src="./assets/quiz-core.js" defer></script>
     <script src="./assets/question-bank.js" defer></script>
+    <script src="./assets/content-data.js" defer></script>
+    <script src="./assets/storage.js" defer></script>
+    <script src="./assets/poster.js" defer></script>
     <script src="./assets/main.js" defer></script>
   </head>
   <body>
     <div class="app-shell">
+      <div class="scan-line" aria-hidden="true"></div>
       <header class="topbar">
-        <div class="brand-lockup">
-          <span class="brand-mark" aria-hidden="true">黑</span>
-          <span>黑话研究室</span>
-        </div>
-        <span class="topbar-note">离线测试</span>
+        <button class="brand-lockup nav-button" type="button" data-screen="home" aria-label="返回首页">
+          <span class="brand-mark" aria-hidden="true">译</span>
+          <span><b>黑话段位局</b><small>JARGON CLEARANCE</small></span>
+        </button>
+        <nav class="top-nav" aria-label="工具导航">
+          <button type="button" data-screen="ranks">段位图鉴</button>
+          <button type="button" data-screen="glossary">黑话词典</button>
+          <button type="button" data-screen="history">测评记录</button>
+        </nav>
       </header>
 
       <main id="app" class="app-main">
-        <section id="intro-screen" class="screen screen-intro is-active" aria-labelledby="intro-title">
-          <div class="intro-copy">
-            <p class="section-label">工作语境样本</p>
-            <h1 id="intro-title">你能活到<br /><em>互联网第几级</em>？</h1>
-            <p class="intro-lede">10 道黑话与网络梗选择题，看看你能不能把“拉通、抓手、闭环”翻译成人话。</p>
-            <button id="start-button" class="button button-primary" type="button">
-              <span>开始测试</span>
-              <span class="button-arrow" aria-hidden="true">↗</span>
-            </button>
-            <p class="microcopy">约 1 分钟完成。结果仅供娱乐，不代表真实职业能力。</p>
+        <section id="home-screen" class="screen screen-home is-active" aria-labelledby="home-title">
+          <div class="hero-copy">
+            <p class="eyebrow">互联网语境扫描 / 本地离线运行</p>
+            <h1 id="home-title">你在黑话江湖，<br /><em>混到第几段？</em></h1>
+            <p class="hero-lede">不是测你有多“班味”。这里考的是：能不能听懂热梗、拆穿空话，再把会议语言翻译成今天能做的事。</p>
+            <div class="hero-actions">
+              <button id="start-button" class="button button-primary" type="button">开始段位扫描 <span aria-hidden="true">↗</span></button>
+              <span>13–15 题 · 会根据答案动态换题</span>
+            </div>
           </div>
 
-          <aside class="intro-note" aria-label="测试说明">
-            <div class="note-stamp">NOTES / 001</div>
-            <div class="note-rule"></div>
-            <p class="note-title">本次测试会观察</p>
-            <ul>
-              <li>你能不能听懂会议里的抽象表达</li>
-              <li>你能不能识别常见网络语境</li>
-              <li>你能不能把话说回具体行动</li>
-            </ul>
-            <div class="note-sign">- 黑话研究室</div>
+          <aside class="clearance-ticket" aria-label="测评说明">
+            <div class="ticket-head"><span>ENTRY PERMIT</span><span>NO. 0823</span></div>
+            <p class="ticket-kicker">今日通关科目</p>
+            <ol>
+              <li><span>01</span>术语破译</li>
+              <li><span>02</span>语境雷达</li>
+              <li><span>03</span>梗文化考古</li>
+              <li><span>04</span>废话鉴别</li>
+              <li><span>05</span>人话翻译</li>
+            </ol>
+            <p class="ticket-note">最高段位，是敢把话说明白。</p>
           </aside>
+
+          <section class="rank-preview" aria-labelledby="rank-preview-title">
+            <div class="section-heading">
+              <div><p class="eyebrow">段位样本 / 先偷看三张</p><h2 id="rank-preview-title">从村口围观，到人话掌门</h2></div>
+              <button class="text-button" type="button" data-screen="ranks">查看全部八段 →</button>
+            </div>
+            <div id="home-rank-list" class="home-rank-list"></div>
+          </section>
+
+          <section class="field-guide-promo" aria-label="附加功能">
+            <div><p class="eyebrow">用完不走 / 还能查词</p><h2>开会听见怪话，随手翻成人话</h2></div>
+            <p>内置 30+ 高频黑话、文化梗和风险追问。不是背词典，是给每个词配一把“落地扳手”。</p>
+            <button class="button button-ghost" type="button" data-screen="glossary">打开黑话词典</button>
+          </section>
         </section>
 
         <section id="quiz-screen" class="screen screen-quiz" aria-labelledby="quiz-title" hidden>
-          <div class="quiz-topline">
-            <span id="question-category" class="category-label">职场黑话</span>
-            <span id="question-counter" class="question-counter">01 / 10</span>
+          <div class="quiz-status">
+            <div><p id="question-phase" class="phase-label">基础校准</p><p id="phase-note">先测一圈，看看你的黑话雷达偏向哪里。</p></div>
+            <span id="question-counter">01 / 13+</span>
           </div>
-          <div id="question-progress" class="progress-line" role="progressbar" aria-label="答题进度" aria-valuemin="1" aria-valuemax="10" aria-valuenow="1" aria-valuetext="第 1 题，共 10 题"><span id="progress-fill"></span></div>
-
-          <div class="quiz-heading">
-            <p class="section-label">请选出最接近的一项</p>
-            <h2 id="quiz-title" tabindex="-1">题目加载中</h2>
+          <div id="question-progress" class="progress-track" role="progressbar" aria-label="答题进度" aria-valuemin="1" aria-valuemax="15" aria-valuenow="1"><span id="progress-fill"></span></div>
+          <article class="question-sheet">
+            <div class="question-meta"><span id="question-category">术语校准</span><span id="question-code">SCAN / 01</span></div>
+            <p class="question-prompt">选最接近你真实判断的一项</p>
+            <h2 id="quiz-title" tabindex="-1">题目载入中</h2>
+            <div id="options-list" class="options-list" role="radiogroup" aria-labelledby="quiz-title" aria-describedby="answer-feedback"></div>
+            <p id="answer-feedback" class="answer-feedback" aria-live="polite"></p>
+          </article>
+          <div class="quiz-actions">
+            <span id="route-hint">答完基础题后，系统会自动分配专项路线。</span>
+            <button id="next-button" class="button button-primary" type="button" disabled>先选一个答案 <span aria-hidden="true">→</span></button>
           </div>
-
-          <div id="options-list" class="options-list" role="radiogroup" aria-labelledby="quiz-title" aria-describedby="answer-feedback"></div>
-          <p id="answer-feedback" class="answer-feedback" aria-live="polite"></p>
-
-          <button id="next-button" class="button button-primary button-next" type="button" disabled>
-            <span>选择一个答案</span>
-            <span class="button-arrow" aria-hidden="true">→</span>
-          </button>
         </section>
 
-        <section id="result-screen" class="screen screen-result" aria-labelledby="result-title" hidden>
-          <div class="result-card">
-            <div class="result-card-header">
-              <span class="section-label">测试结果</span>
-              <span class="result-card-id">BLACKWORD / LEVEL</span>
+        <section id="loading-screen" class="screen screen-loading" aria-live="polite" hidden>
+          <div class="scanner-orbit" aria-hidden="true"><span></span><i></i></div>
+          <p class="eyebrow">正在校准段位</p>
+          <h2>拆除话术包装，<br />核对你的人话浓度。</h2>
+          <div class="loading-log"><span>术语词库已比对</span><span>语境偏差已修正</span><span>晋级线正在确认</span></div>
+        </section>
+
+        <section id="report-screen" class="screen screen-report" aria-labelledby="result-rank-name" hidden>
+          <div class="report-hero">
+            <div class="report-title-block">
+              <p class="eyebrow">本轮通关报告 / <span id="result-record-code">LOCAL</span></p>
+              <p id="result-level" class="result-level">LV.01</p>
+              <h2 id="result-rank-name">段位待鉴定</h2>
+              <p id="result-profile" class="result-profile"></p>
+              <blockquote id="result-quote"></blockquote>
             </div>
-            <div class="result-rule"></div>
-            <p id="result-level" class="result-level">LV.4</p>
-            <h2 id="result-title">黑话熟练工</h2>
-            <p id="result-description" class="result-description"></p>
-            <div class="result-score-block">
-              <span class="score-label">本轮得分</span>
-              <strong id="result-score">00</strong><span class="score-total">/ 100</span>
-            </div>
-            <div id="result-tags" class="result-tags" aria-label="结果标签"></div>
-            <p id="result-tone" class="result-tone"></p>
-            <div class="result-prescription">
-              <span class="prescription-label">人话处方</span>
-              <p>听到“抓手、闭环、赋能”时，追问四件事：目标、负责人、时间、结果。</p>
-            </div>
-            <div class="result-card-footer">
-              <span>截图保存，发给那个最会说“闭环”的人</span>
-              <span class="footer-mark">黑话研究室</span>
-            </div>
+            <div class="score-seal"><span>综合扫描值</span><strong id="result-overall">00</strong><small>/ 100</small></div>
           </div>
 
-          <div class="result-actions">
-            <button id="explanation-button" class="button button-secondary" type="button" aria-expanded="false">查看解析</button>
-            <button id="restart-button" class="button button-primary" type="button">再测一次 <span class="button-arrow" aria-hidden="true">↗</span></button>
+          <div class="report-grid">
+            <section class="report-section radar-section" aria-labelledby="radar-title">
+              <div class="report-section-head"><span>01</span><h3 id="radar-title">五维雷达</h3></div>
+              <canvas id="radar-canvas" width="640" height="540" aria-label="五维能力雷达图"></canvas>
+              <div id="dimension-list" class="dimension-list"></div>
+            </section>
+            <section class="report-section dossier-section" aria-labelledby="profile-title">
+              <div class="report-section-head"><span>02</span><h3 id="profile-title">段位档案</h3></div>
+              <p id="result-description" class="report-lede"></p>
+              <dl class="meeting-behavior"><dt>会议现场</dt><dd id="result-meeting"></dd></dl>
+              <div id="result-badges" class="badge-list" aria-label="专精徽章"></div>
+            </section>
+            <section class="report-section" aria-labelledby="strength-title">
+              <div class="report-section-head"><span>03</span><h3 id="strength-title">优势与雷区</h3></div>
+              <div class="split-lists"><div><h4>你的优势</h4><ul id="result-strengths"></ul></div><div><h4>容易踩的坑</h4><ul id="result-pitfalls"></ul></div></div>
+            </section>
+            <section class="report-section" aria-labelledby="advice-title">
+              <div class="report-section-head"><span>04</span><h3 id="advice-title">人话处方</h3></div>
+              <div class="split-lists"><div><h4>下一步建议</h4><ul id="result-advice"></ul></div><div><h4>适配环境</h4><ul id="result-environment"></ul></div></div>
+              <div class="next-mission"><span>NEXT MISSION</span><p id="result-mission"></p></div>
+            </section>
+            <section id="comparison-section" class="report-section comparison-section" aria-labelledby="comparison-title" hidden>
+              <div class="report-section-head"><span>05</span><h3 id="comparison-title">与上次相比</h3></div>
+              <div id="comparison-list" class="comparison-list"></div>
+            </section>
           </div>
 
-          <div id="explanation-panel" class="explanation-panel" hidden>
-            <div class="explanation-heading">
-              <p class="section-label">答案记录</p>
-              <span>每题一句人话</span>
-            </div>
-            <div id="explanation-list" class="explanation-list"></div>
+          <div class="report-actions">
+            <button id="share-button" class="button button-primary" type="button">生成高清通行证 <span aria-hidden="true">↗</span></button>
+            <button id="restart-button" class="button button-ghost" type="button">保留记录，再测一次</button>
+            <button class="text-button" type="button" data-screen="ranks">去看全部段位</button>
           </div>
+        </section>
+
+        <section id="ranks-screen" class="screen screen-library" aria-labelledby="ranks-title" hidden>
+          <div class="library-heading"><p class="eyebrow">RANK ARCHIVE / 全八段</p><h1 id="ranks-title">黑话江湖段位图鉴</h1><p>段位越高，不代表说得越绕。真正的晋级，是从听懂黑话到有能力选择说人话。</p></div>
+          <div id="rank-gallery" class="rank-gallery"></div>
+        </section>
+
+        <section id="glossary-screen" class="screen screen-library" aria-labelledby="glossary-title" hidden>
+          <div class="library-heading"><p class="eyebrow">FIELD GUIDE / 本地查词</p><h1 id="glossary-title">黑话翻译现场</h1><p>每个词包含人话释义、使用风险和一句追问。查词不联网，记录不上传。</p></div>
+          <div class="glossary-tools">
+            <label for="glossary-search">搜索词语或释义</label>
+            <input id="glossary-search" type="search" placeholder="试试：抓手、闭环、班味" autocomplete="off" />
+            <div id="glossary-filters" class="filter-row" aria-label="词典分类"></div>
+          </div>
+          <div id="glossary-list" class="glossary-list"></div>
+          <p id="glossary-empty" class="empty-state" hidden>没有找到这个词，换个更像黑话的关键词试试。</p>
+        </section>
+
+        <section id="history-screen" class="screen screen-library" aria-labelledby="history-title" hidden>
+          <div class="library-heading history-heading"><div><p class="eyebrow">LOCAL RECORDS / 仅存本机</p><h1 id="history-title">你的段位轨迹</h1><p>最多保留 8 次。重新测评会优先换一批未答过的题。</p></div><button id="clear-history-button" class="button button-ghost" type="button">清空记录</button></div>
+          <div id="history-list" class="history-list"></div>
+          <div id="history-empty" class="history-empty" hidden><span>00</span><h2>还没有通关记录</h2><p>先完成一次测评，这里会显示段位与五维变化。</p><button class="button button-primary" type="button" data-start-quiz>开始段位扫描</button></div>
         </section>
       </main>
 
-      <footer class="app-footer">
-        <span>纯本地运行，不上传答题记录</span>
-      </footer>
+      <footer class="app-footer"><span>本地运行 · 不上传答题记录</span><span>仅供娱乐与表达训练，不构成职业能力评价</span></footer>
+    </div>
+
+    <div id="share-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="share-title" hidden>
+      <div class="modal-backdrop" data-close-share></div>
+      <section class="modal-panel share-panel">
+        <button class="modal-close" type="button" aria-label="关闭分享预览" data-close-share>×</button>
+        <div class="modal-copy"><p class="eyebrow">1080 × 1440 / 分享通行证</p><h2 id="share-title">把段位贴到工位门口</h2><p>已适配小红书竖图比例。可保存到相册，也可以直接进入笔记发布页。</p></div>
+        <div class="poster-frame"><img id="poster-preview" alt="黑话段位分享通行证预览" /><canvas id="poster-canvas" width="1080" height="1440" hidden></canvas></div>
+        <p id="share-feedback" class="modal-feedback" aria-live="polite"></p>
+        <div class="modal-actions"><button id="save-poster-button" class="button button-ghost" type="button">保存到相册</button><button id="post-note-button" class="button button-primary" type="button">发小红书笔记</button></div>
+      </section>
+    </div>
+
+    <div id="confirm-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" hidden>
+      <div class="modal-backdrop" data-cancel-clear></div>
+      <section class="modal-panel confirm-panel"><p class="eyebrow">LOCAL RECORDS</p><h2 id="confirm-title">确定清空所有记录？</h2><p>这个动作只影响当前设备，清空后无法恢复。</p><div class="modal-actions"><button class="button button-ghost" type="button" data-cancel-clear>先留着</button><button id="confirm-clear-button" class="button button-danger" type="button">确认清空</button></div></section>
     </div>
   </body>
 </html>
