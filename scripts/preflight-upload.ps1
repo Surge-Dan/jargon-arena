@@ -38,6 +38,9 @@ $forbiddenPatterns = @(
   '<base\b',
   '\bdownload\b',
   'target\s*=',
+  '\btype\s*=\s*["'']module["'']',
+  '\bimport\s+',
+  '\bexport\s+',
   'https?://',
   'onclick\s*=',
   'javascript:'

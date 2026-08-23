@@ -82,7 +82,7 @@ button:focus-visible {
   align-items: center;
   justify-content: space-between;
   min-height: 72px;
-  padding: calc(18px + env(safe-area-inset-top)) clamp(20px, 5vw, 72px) 18px;
+  padding: calc(18px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) clamp(20px, 5vw, 72px) 18px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -690,7 +690,7 @@ h1 em {
   display: flex;
   justify-content: space-between;
   gap: 20px;
-  padding: 18px clamp(20px, 5vw, 72px) calc(24px + env(safe-area-inset-bottom));
+  padding: 18px clamp(20px, 5vw, 72px) calc(24px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
   color: rgba(238, 233, 223, 0.42);
   font-family: "Courier New", monospace;
   font-size: 9px;
@@ -713,7 +713,7 @@ h1 em {
 @media (max-width: 720px) {
   .topbar {
     min-height: 62px;
-    padding: calc(16px + env(safe-area-inset-top)) 20px 16px;
+    padding: calc(16px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px))) 20px 16px;
   }
 
   .app-main {

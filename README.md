@@ -2,9 +2,23 @@
 
 中文名：**黑话段位局**
 
-一个离线运行的互联网黑话段位测试小工具。用 10 道场景题，测测你能不能把职场黑话、网络梗和抽象表达翻译成人话。
+一句话简介（小红书发布字段可直接复制）：**把互联网黑话翻译成人话**
+
+一个离线运行的互联网黑话段位测试小工具。用 10 道场景题，测测你能不能把职场黑话、网络梗和抽象表达翻译成具体的人话与行动。
 
 > 最高境界不是会说黑话，而是知道什么时候不用说。
+
+## 发布信息
+
+| 字段 | 内容 |
+| --- | --- |
+| 小工具名称 | 黑话段位局 |
+| 简介 | 把互联网黑话翻译成人话 |
+| 图标 | `branding/jargon-arena-icon.png` |
+| 推荐权限 | 不需要权限 |
+| 运行方式 | 离线静态 H5 |
+
+图标是 1:1 PNG，1254×1254，RGBA，约 3.17 MB，适合截图中所示的图标上传字段。图标不属于运行包，发布时单独上传；上传包只包含运行所需的 `index.html` 和 `assets/`。
 
 ## 为什么做它
 
@@ -46,10 +60,11 @@
 - 原生 HTML、CSS 和 JavaScript
 - 无框架、无构建步骤、无第三方依赖
 - 无外部网络请求，可离线运行
-- 单页视图切换，符合小红书小组件的单页形态
+- 单页视图切换，符合小红书小工具的单页形态
 - 题库、评分逻辑和界面逻辑分离
 - 每次测试随机打乱选项，避免“永远选第一个就是满分”
 - 对题库数量、分类、重复 ID、重复选项和解析完整性进行启动校验
+- 交互使用按钮和键盘可达性，不依赖 hover 才能完成核心流程
 
 ## 项目结构
 
@@ -61,6 +76,8 @@
 │   ├── question-bank.js       # 10 道题目与解析
 │   ├── quiz-core.js           # 评分、等级、标签、题库校验
 │   └── style.css              # 移动端视觉样式
+├── branding/
+│   └── jargon-arena-icon.png  # 发布页单独上传的图标
 ├── scripts/
 │   ├── build-upload.ps1       # 只打包运行文件，生成上传 ZIP
 │   └── preflight-upload.ps1   # 对上传 ZIP 做规则门禁扫描
@@ -106,7 +123,7 @@ UI 测试覆盖：开始测试、10 道题、键盘方向键、分类标签、�
 
 ## 生成小红书上传包
 
-不要把整个 GitHub 仓库直接压缩上传。仓库中的 README、测试脚本和 `.git` 目录不属于运行包。
+不要把整个 GitHub 仓库直接压缩上传。仓库中的 README、测试脚本、发布图标和 `.git` 目录不属于运行包。
 
 在仓库根目录执行：
 
@@ -114,7 +131,7 @@ UI 测试覆盖：开始测试、10 道题、键盘方向键、分类标签、�
 powershell -ExecutionPolicy Bypass -File .\scripts\build-upload.ps1
 ```
 
-脚本会只打包 `index.html` 和 `assets/`，在仓库同级生成 `jargon-arena-upload.zip`，保证 `index.html` 位于 ZIP 根目录。
+脚本只打包 `index.html` 和 `assets/`，在仓库同级生成 `jargon-arena-upload.zip`，保证 `index.html` 位于 ZIP 根目录。
 
 生成后执行上传前门禁：
 
@@ -122,16 +139,48 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-upload.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\preflight-upload.ps1 -ZipPath ..\jargon-arena-upload.zip
 ```
 
-门禁会检查入口位置、文件类型、包体积、外部资源、网络请求、受限 Web API、内联脚本、`iframe`、`object`、`base`、下载和外链跳转等风险。
+门禁会检查：
 
-## 小红书适配边界
+- ZIP 根目录是否存在 `index.html`
+- 文件类型是否在官方允许范围内
+- 包体积是否低于本项目的保守门槛 2 MB
+- 是否存在外部资源、网络请求、受限 Web API、内联脚本、`iframe`、`object`、`base`、下载、外链跳转或 ES Module
+- 上传包是否只包含运行时文件
 
-本项目按小红书官方小组件公开说明和官方离线 H5 ZIP 规则包进行静态设计：单页、包体不超过 2MB、资源使用包内相对路径、脚本外置、全程不联网。
+## 官方 1.4.1 规则对齐
 
-- [小红书官方小组件介绍](https://miniapp.xiaohongshu.com/doc/DC026740)
-- [小红书官方开放平台](https://miniapp.xiaohongshu.com/)
+本次发布校验使用官方静态规则包 1.4.1：
 
-当前公开文档显示，小组件创作仍处于邀请制灰度阶段；技术包通过本地门禁不代表平台账号侧已经获得资格或最终审核通过。实际发布前仍需在 Builder Hub 中预览、真机验证并提交审核。
+```text
+.codex/minitool-zip-builder-1.4.1/SKILL.md
+```
+
+规则包已解压到工作区并读取，相关参考文件位于同目录的 `references/` 下。当前实现按以下要求收敛：
+
+- ZIP 根目录直接放置单一 `index.html`
+- 使用经典外置脚本，不使用 `type="module"`、`import`、`export` 和顶层 await
+- 所有资源使用包内相对路径，不引用 CDN、外部字体或图片
+- 不使用 fetch、XHR、WebSocket、iframe、Worker、WASM、剪贴板、定位、下载或外部跳转
+- 使用移动端 viewport 与安全区 fallback，核心操作不依赖 hover
+- 官方规则包给出的 ZIP 总上限为 10 MB，并建议控制在 2 MB 以内；本项目门禁继续使用更保守的 2 MB 阈值
+
+小红书公开平台页面也将小组件描述为轻量、场景化的单页体验，并说明当前仍以邀请制灰度为主：[小红书官方小组件介绍](https://miniapp.xiaohongshu.com/doc/DC026740)。技术包通过本地门禁不代表平台账号侧已经获得资格或最终审核通过。
+
+## 当前验收结果
+
+最近一次完整验收结果：
+
+```text
+6 个 Node 单元测试通过
+JavaScript 语法检查通过
+UPLOAD_PREFLIGHT=PASS
+UPLOAD_BYTES=14340
+运行包解压后文件：index.html + 4 个 assets 文件
+Playwright UI smoke：375×812、320×568 均通过
+图标：1254×1254 PNG / RGBA / 3173496 bytes
+```
+
+正式发布前仍应在 Builder Hub 中上传生成的 ZIP，完成平台预览和真机验证，再提交审核。静态检查、浏览器测试和平台最终审核是三个不同层级，不能相互替代。
 
 ## 项目定位
 
