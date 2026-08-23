@@ -84,6 +84,7 @@
 └── tests/
     ├── quiz-core.test.js      # Node 单元测试
     ├── static-server.cjs      # 本地静态服务器
+    ├── upload-package.py      # 检查 ZIP 原始条目的安全路径
     └── ui-smoke.py            # Playwright 移动端流程测试
 ```
 
@@ -139,12 +140,19 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-upload.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\preflight-upload.ps1 -ZipPath ..\jargon-arena-upload.zip
 ```
 
+再检查 ZIP 原始文件名，确保 Windows 打包不会写入反斜杠路径：
+
+```powershell
+python .\tests\upload-package.py ..\jargon-arena-upload.zip
+```
+
 门禁会检查：
 
 - ZIP 根目录是否存在 `index.html`
 - 文件类型是否在官方允许范围内
 - 包体积是否低于本项目的保守门槛 2 MB
 - 是否存在外部资源、网络请求、受限 Web API、内联脚本、`iframe`、`object`、`base`、下载、外链跳转或 ES Module
+- ZIP 内部文件名是否使用 `/` 分隔，且没有绝对路径或路径穿越
 - 上传包是否只包含运行时文件
 
 ## 官方 1.4.1 规则对齐
@@ -175,6 +183,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\preflight-upload.ps1 -ZipPath
 JavaScript 语法检查通过
 UPLOAD_PREFLIGHT=PASS
 UPLOAD_BYTES=14340
+ZIP PATH TEST PASSED：5 个条目使用安全的 `/` 相对路径
 运行包解压后文件：index.html + 4 个 assets 文件
 Playwright UI smoke：375×812、320×568 均通过
 图标：1254×1254 PNG / RGBA / 3244228 bytes / 四角 alpha=255
