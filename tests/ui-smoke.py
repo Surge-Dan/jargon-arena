@@ -18,6 +18,16 @@ def assert_mobile_layout(page):
     )
 
 
+def assert_top_rail_is_fixed(page):
+    rail = page.locator(".viewport-top-rail")
+    assert rail.count() == 1
+    assert abs(rail.evaluate("node => node.getBoundingClientRect().top")) < 0.5
+    page.evaluate("window.scrollTo(0, 700)")
+    page.wait_for_timeout(80)
+    assert abs(rail.evaluate("node => node.getBoundingClientRect().top")) < 0.5
+    page.evaluate("window.scrollTo(0, 0)")
+
+
 with sync_playwright() as playwright:
     browser = playwright.chromium.launch(headless=True)
     page = browser.new_page(viewport={"width": 375, "height": 812}, device_scale_factor=1)
@@ -31,18 +41,23 @@ with sync_playwright() as playwright:
         window.xhs = { miniTool: {
           writeTempFile: async ({data}) => { await window.recordBridgeCall('temp:' + data.slice(0, 22)); return {filePath: 'local://poster.png'}; },
           saveImageToPhotosAlbum: async ({filePath}) => { await window.recordBridgeCall('save:' + filePath); return {success: true}; },
-          postNote: async ({title}) => { await window.recordBridgeCall('post:' + title); return {success: true}; }
+          postNote: async ({title, content}) => { await window.recordBridgeCall('post:' + title + ':' + content.length); return {success: true}; }
         }};
         """
     )
     page.goto(base_url, wait_until="networkidle")
 
     assert page.title() == "黑话段位局｜互联网黑话通关测评"
-    assert page.get_by_text("最高段位，是敢把话说明白").is_visible()
-    assert page.locator(".rank-teaser").count() >= 3
+    assert page.get_by_text("最高段位，不是梭哈黑话").is_visible()
+    assert page.locator(".poker-table").is_visible()
+    assert page.locator(".player-seat").count() == 4
+    assert page.locator(".dealt-card").count() >= 3
+    assert page.get_by_role("button", name="快速测段位").is_visible()
+    assert page.get_by_role("button", name="进入成长牌局").is_visible()
+    assert_top_rail_is_fixed(page)
     assert_mobile_layout(page)
 
-    page.get_by_role("button", name="开始段位扫描").click()
+    page.get_by_role("button", name="快速测段位").click()
     answered = 0
     seen_phases = set()
     while page.locator("#quiz-screen").is_visible() and answered < 16:
@@ -64,7 +79,10 @@ with sync_playwright() as playwright:
     assert 0 <= int(page.locator("#result-overall").inner_text()) <= 100
     assert page.locator("#radar-canvas").evaluate("node => node.width > 0 && node.height > 0")
     assert page.locator(".badge-chip").count() == 2
-    assert page.locator(".report-section").count() >= 5
+    assert page.locator(".report-section").count() >= 6
+    assert page.locator("#result-rank-emblem img").is_visible()
+    page.wait_for_function("document.querySelector('#result-rank-emblem img').naturalWidth > 0")
+    assert page.locator(".poker-insight-item").count() >= 5
     assert page.evaluate("JSON.parse(localStorage.getItem('jargon-arena-history-v2')).length === 1")
     page.screenshot(path=str(artifact_dir / "report.png"), full_page=True)
 
@@ -77,11 +95,30 @@ with sync_playwright() as playwright:
     page.get_by_role("button", name="发小红书笔记").click()
     page.wait_for_timeout(60)
     assert any(call.startswith("save:") for call in bridge_calls)
-    assert any(call.startswith("post:") for call in bridge_calls)
+    post_calls = [call for call in bridge_calls if call.startswith("post:")]
+    assert post_calls and int(post_calls[-1].rsplit(":", 1)[1]) >= 320
     page.get_by_role("button", name="关闭分享预览").click()
+
+    page.evaluate(
+        "localStorage.setItem('jargon-arena-growth-v1', JSON.stringify({rankId:4,xp:85,streak:0,completedMissionIds:[],lastBaselineRankId:4,unlockedAt:{}}))"
+    )
+    page.get_by_role("button", name="进入成长牌局").click()
+    assert page.locator("#growth-screen").is_visible()
+    assert page.locator(".mission-card").count() == 3
+    page.locator(".mission-card").first.get_by_role("button", name="接下这手").click()
+    if page.locator(".mission-option").count():
+        for option_index in range(page.locator(".mission-option").count()):
+            page.locator(".mission-option").nth(option_index).click()
+            if page.locator("#complete-mission-button").is_enabled():
+                break
+    page.locator("#complete-mission-button").click()
+    assert page.locator("#rank-up-modal").is_visible()
+    assert page.locator("#growth-rank-name").inner_text()
+    page.get_by_role("button", name="收下新段位").click()
 
     page.get_by_role("button", name="段位图鉴").click()
     assert page.locator(".rank-dossier").count() == 8
+    assert page.locator(".rank-emblem").count() == 8
     page.get_by_role("button", name="黑话词典").click()
     assert page.locator(".glossary-item").count() >= 30
     page.locator("#glossary-search").fill("抓手")
@@ -90,7 +127,7 @@ with sync_playwright() as playwright:
     assert page.locator(".history-item").count() == 1
 
     page.get_by_role("button", name="返回首页").click()
-    page.get_by_role("button", name="开始段位扫描").click()
+    page.get_by_role("button", name="快速测段位").click()
     second_answered = 0
     while page.locator("#quiz-screen").is_visible() and second_answered < 16:
         page.locator(".option-button").nth((second_answered + 2) % 4).click()
@@ -106,6 +143,7 @@ with sync_playwright() as playwright:
         page.set_viewport_size({"width": width, "height": height})
         page.reload(wait_until="networkidle")
         assert page.locator("#home-screen").is_visible()
+        assert_top_rail_is_fixed(page)
         assert_mobile_layout(page)
 
     assert not errors, errors

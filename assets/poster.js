@@ -11,12 +11,23 @@
   const POSTER_HEIGHT = 1440;
 
   function buildShareCopy(result) {
-    const rankName = result && result.rank ? result.rank.name : '黑话段位待鉴定';
+    const rank = result && result.rank ? result.rank : {};
+    const rankName = rank.name || '黑话段位待鉴定';
+    const tier = rank.tier || '未定级';
     const overall = Number(result && result.overall) || 0;
+    const badges = Array.isArray(result && result.badges) ? result.badges : [];
+    const badgeText = badges.map((badge) => badge.label).filter(Boolean).join('、') || '人话观察员';
+    const dimensions = (result && result.dimensions) || {};
+    const dimensionLabels = { decode: '术语破译', context: '语境雷达', culture: '梗文化', filter: '废话鉴别', translate: '人话翻译' };
+    const dimensionRows = Object.keys(dimensionLabels).map((key) => ({ key, score: Number(dimensions[key]) || 0 }));
+    const strongest = [...dimensionRows].sort((a, b) => b.score - a.score)[0];
+    const weakest = [...dimensionRows].sort((a, b) => a.score - b.score)[0];
+    const style = (result && result.pokerStyle) || '先看牌面，再听弦外音';
+    const gap = (result && (result.rankGap || result.mission)) || '把抽象方向翻成负责人、时间与验收标准';
     return {
-      title: `我的黑话段位：${rankName}`.slice(0, 20),
-      content: `刚测完黑话段位局：${rankName}，综合分 ${overall}。最高境界不是把话说复杂，而是知道什么时候该说人话。`,
-      tags: '#黑话段位局 #互联网职场 #职场黑话',
+      title: `我在黑话牌桌打到${tier}`.slice(0, 20),
+      content: `刚打完一局「黑话段位局」，系统给我翻牌：${tier} · ${rankName}，综合扫描 ${overall} 分，专精徽章是「${badgeText}」。这张互联网职场牌桌上，我的打法被判定为“${style}”：抓手可以有，但先说清抓什么；闭环可以画，但别拿圆圈当进度条；颗粒度可以往下拆，但不能把一个动作拆成八场会。\n\n五维牌面里，我最能打的是${dimensionLabels[strongest.key]}（${strongest.score}），最容易被偷鸡的是${dimensionLabels[weakest.key]}（${weakest.score}）。看来我已经能在“对齐一下—拉通一下—赋能一下—沉淀一下”的组合拳里活着走出会议室，但离真正的人话自由还有一手关键牌：${gap}。\n\n这局最抽象的地方，是它不只考你认不认识互联网黑话，还考你能不能听出潜台词、识别废话、把“打造全链路增长飞轮”翻成今天谁做什么。会说黑话不算王者，能判断什么时候该跟注、什么时候该追问、什么时候直接把牌翻成人话，才叫控桌。\n\n我现在宣布：以后再听到“原则上支持”，先问条件；听到“后面再对齐”，先定时间；听到“形成业务合力”，先找负责人。黑话不是原罪，拿黑话藏住问题才是。轮到你上桌了——看看你会被一句“提升组织势能”打懵，还是能把整桌的抓手、闭环、颗粒度、赋能和组合拳全部翻译成人话。`,
+      tags: '#黑话段位局 #互联网职场 #职场黑话 #打工人嘴替 #人话翻译局',
     };
   }
 

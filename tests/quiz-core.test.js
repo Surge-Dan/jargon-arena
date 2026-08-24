@@ -23,15 +23,15 @@ function answerQuestion(question, optionIndex) {
   };
 }
 
-test('validates a production bank with at least 40 questions and every adaptive stage', () => {
+test('validates a production bank with at least 64 questions and deep replay coverage', () => {
   assert.equal(core.validateQuestionBank(bank), true);
-  assert.ok(bank.length >= 40);
-  assert.ok(bank.filter((question) => question.stage === 'calibration').length >= 8);
-  assert.ok(bank.filter((question) => question.stage === 'boss').length >= 3);
-  assert.ok(bank.filter((question) => question.stage === 'playoff').length >= 5);
+  assert.ok(bank.length >= 64);
+  assert.ok(bank.filter((question) => question.stage === 'calibration').length >= 14);
+  assert.ok(bank.filter((question) => question.stage === 'boss').length >= 6);
+  assert.ok(bank.filter((question) => question.stage === 'playoff').length >= 8);
 
   core.DIMENSION_KEYS.forEach((dimension) => {
-    assert.ok(bank.filter((question) => question.stage === 'branch' && question.dimension === dimension).length >= 4);
+    assert.ok(bank.filter((question) => question.stage === 'branch' && question.dimension === dimension).length >= 8);
   });
 });
 
@@ -65,7 +65,8 @@ test('requires filter and translation strength for the top rank', () => {
 
   assert.equal(gated.id, 7);
   assert.equal(master.id, 8);
-  assert.equal(master.name, '返璞归真人话掌门');
+  assert.equal(master.tier, '王者');
+  assert.equal(master.name, '人话掌门');
 });
 
 test('builds a deterministic five-question adaptive route from one weak and one strong track', () => {

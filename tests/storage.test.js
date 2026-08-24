@@ -59,3 +59,13 @@ test('compares every dimension with a previous result', () => {
 
   assert.deepEqual(comparison, { decode: 10, context: -5, culture: 0, filter: 10, translate: -5 });
 });
+
+test('stores growth progress separately and recovers from corrupt data', () => {
+  assert.ok(storageApi.GROWTH_KEY);
+  const storage = createMemoryStorage({ [storageApi.GROWTH_KEY]: '{bad-json' });
+  assert.equal(storageApi.loadGrowth(storage), null);
+
+  const progress = { rankId: 5, xp: 42, completedMissionIds: ['mission-1'] };
+  assert.deepEqual(storageApi.saveGrowth(storage, progress), progress);
+  assert.deepEqual(storageApi.loadGrowth(storage), progress);
+});

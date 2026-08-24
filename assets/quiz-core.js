@@ -16,14 +16,14 @@
   };
   const DIMENSION_KEYS = Object.keys(DIMENSIONS);
   const RANKS = [
-    { id: 1, min: 0, max: 24, name: '人话保护区原住民', code: 'PLAIN-01' },
-    { id: 2, min: 25, max: 39, name: '黑话村口观察员', code: 'WATCH-02' },
-    { id: 3, min: 40, max: 51, name: '热词练习生', code: 'TRAINEE-03' },
-    { id: 4, min: 52, max: 63, name: '会议室生还者', code: 'SURVIVE-04' },
-    { id: 5, min: 64, max: 73, name: '语境翻译官', code: 'CONTEXT-05' },
-    { id: 6, min: 74, max: 82, name: '抓手装配师', code: 'HANDLE-06' },
-    { id: 7, min: 83, max: 91, name: '组织语言架构师', code: 'ARCH-07' },
-    { id: 8, min: 92, max: 100, name: '返璞归真人话掌门', code: 'MASTER-08' },
+    { id: 1, min: 0, max: 24, tier: '黑铁', name: '人话萌新', code: 'IRON-01' },
+    { id: 2, min: 25, max: 39, tier: '青铜', name: '黑话观察员', code: 'BRONZE-02' },
+    { id: 3, min: 40, max: 51, tier: '白银', name: '热词练习生', code: 'SILVER-03' },
+    { id: 4, min: 52, max: 63, tier: '黄金', name: '会议室生还者', code: 'GOLD-04' },
+    { id: 5, min: 64, max: 73, tier: '铂金', name: '语境翻译官', code: 'PLATINUM-05' },
+    { id: 6, min: 74, max: 82, tier: '钻石', name: '抓手装配师', code: 'DIAMOND-06' },
+    { id: 7, min: 83, max: 91, tier: '大师', name: '组织语言架构师', code: 'MASTER-07' },
+    { id: 8, min: 92, max: 100, tier: '王者', name: '人话掌门', code: 'KING-08' },
   ];
   const VALID_STAGES = new Set(['calibration', 'branch', 'boss', 'playoff']);
 
@@ -247,8 +247,8 @@
   }
 
   function validateQuestionBank(bank) {
-    if (!Array.isArray(bank) || bank.length < 40) {
-      throw new Error('题库必须至少包含 40 道题');
+    if (!Array.isArray(bank) || bank.length < 64) {
+      throw new Error('题库必须至少包含 64 道题');
     }
 
     const ids = new Set();
@@ -286,17 +286,17 @@
       }
     });
 
-    if (bank.filter((question) => question.stage === 'calibration').length < 8) {
+    if (bank.filter((question) => question.stage === 'calibration').length < 14) {
       throw new Error('校准题不足');
     }
-    if (bank.filter((question) => question.stage === 'boss').length < 3) {
+    if (bank.filter((question) => question.stage === 'boss').length < 6) {
       throw new Error('综合题不足');
     }
-    if (bank.filter((question) => question.stage === 'playoff').length < 5) {
+    if (bank.filter((question) => question.stage === 'playoff').length < 8) {
       throw new Error('晋级题不足');
     }
     DIMENSION_KEYS.forEach((dimension) => {
-      if (bank.filter((question) => question.stage === 'branch' && question.dimension === dimension).length < 4) {
+      if (bank.filter((question) => question.stage === 'branch' && question.dimension === dimension).length < 8) {
         throw new Error(`${DIMENSIONS[dimension].label}支线题不足`);
       }
     });

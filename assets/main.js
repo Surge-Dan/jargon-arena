@@ -5,8 +5,11 @@
     const content = root.QuizContentData;
     const storageApi = root.QuizStorage;
     const posterApi = root.QuizPoster;
+    const growthCore = root.GrowthCore;
+    const growthMissions = root.GrowthMissions;
+    const rankAssets = root.RankAssets && root.RankAssets.RANK_ASSETS;
 
-    if (!core || !bank || !content || !storageApi || !posterApi) {
+    if (!core || !bank || !content || !storageApi || !posterApi || !growthCore || !growthMissions || !rankAssets) {
       showFatalError('工具资源没有完整载入，请关闭后重新打开。');
       return;
     }
@@ -40,6 +43,8 @@
       currentResult: null,
       glossaryCategory: '全部',
       history: storageApi.loadHistory(localStore),
+      growth: storageApi.loadGrowth(localStore),
+      activeMission: null,
       playoffEvaluated: false,
       questions: [],
       routeTracks: [],
@@ -52,12 +57,14 @@
       quiz: elements.quizScreen,
       loading: elements.loadingScreen,
       report: elements.reportScreen,
+      growth: elements.growthScreen,
       ranks: elements.ranksScreen,
       glossary: elements.glossaryScreen,
       history: elements.historyScreen,
     };
 
     renderHomeRanks();
+    renderGrowth();
     renderRankGallery();
     renderGlossaryFilters();
     renderGlossary();
@@ -67,7 +74,7 @@
     function collectElements() {
       const ids = [
         'home-screen', 'quiz-screen', 'loading-screen', 'report-screen', 'ranks-screen', 'glossary-screen',
-        'history-screen', 'start-button', 'next-button', 'restart-button', 'question-phase', 'phase-note',
+        'history-screen', 'growth-screen', 'start-button', 'next-button', 'restart-button', 'question-phase', 'phase-note',
         'question-counter', 'question-progress', 'progress-fill', 'question-category', 'question-code', 'quiz-title',
         'options-list', 'answer-feedback', 'route-hint', 'result-record-code', 'result-level', 'result-rank-name',
         'result-profile', 'result-quote', 'result-overall', 'result-description', 'result-meeting', 'result-badges',
@@ -75,7 +82,11 @@
         'dimension-list', 'comparison-section', 'comparison-list', 'share-button', 'home-rank-list', 'rank-gallery',
         'glossary-search', 'glossary-filters', 'glossary-list', 'glossary-empty', 'history-list', 'history-empty',
         'clear-history-button', 'share-modal', 'poster-preview', 'poster-canvas', 'share-feedback',
-        'save-poster-button', 'post-note-button', 'confirm-modal', 'confirm-clear-button',
+        'save-poster-button', 'post-note-button', 'confirm-modal', 'confirm-clear-button', 'result-rank-emblem',
+        'poker-insight-list', 'result-growth-tasks', 'growth-rank-emblem', 'growth-tier', 'growth-rank-name',
+        'growth-xp-fill', 'growth-xp-label', 'mission-list', 'mission-modal', 'mission-ante', 'mission-title',
+        'mission-scenario', 'mission-action', 'mission-options', 'mission-feedback', 'complete-mission-button',
+        'rank-up-modal', 'rank-up-emblem', 'rank-up-name', 'close-rank-up-button',
       ];
       const output = { missing: [] };
       ids.forEach((id) => {
@@ -96,6 +107,8 @@
       elements.glossarySearch.addEventListener('input', renderGlossary);
       elements.clearHistoryButton.addEventListener('click', () => setModal(elements.confirmModal, true));
       elements.confirmClearButton.addEventListener('click', clearHistory);
+      elements.completeMissionButton.addEventListener('click', completeActiveMission);
+      elements.closeRankUpButton.addEventListener('click', () => setModal(elements.rankUpModal, false));
 
       document.querySelectorAll('[data-screen]').forEach((button) => {
         button.addEventListener('click', () => showScreen(button.dataset.screen));
@@ -107,10 +120,15 @@
       document.querySelectorAll('[data-cancel-clear]').forEach((button) => {
         button.addEventListener('click', () => setModal(elements.confirmModal, false));
       });
+      document.querySelectorAll('[data-close-mission]').forEach((button) => {
+        button.addEventListener('click', () => setModal(elements.missionModal, false));
+      });
       document.addEventListener('keydown', (event) => {
         if (event.key !== 'Escape') return;
         if (!elements.shareModal.hidden) setModal(elements.shareModal, false);
         if (!elements.confirmModal.hidden) setModal(elements.confirmModal, false);
+        if (!elements.missionModal.hidden) setModal(elements.missionModal, false);
+        if (!elements.rankUpModal.hidden) setModal(elements.rankUpModal, false);
       });
     }
 
@@ -123,6 +141,7 @@
       });
       if (name === 'history') renderHistory();
       if (name === 'glossary') renderGlossary();
+      if (name === 'growth') renderGrowth();
       root.scrollTo(0, 0);
       const heading = screens[name].querySelector('h1, h2');
       if (heading) heading.setAttribute('tabindex', '-1');
@@ -286,6 +305,13 @@
         dimensions: summary.dimensions,
         badges: core.getBadges(summary.dimensions),
         quote: details.quote,
+        pokerStyle: details.pokerStyle,
+        signatureMove: details.signatureMove,
+        hiddenCard: details.hiddenCard,
+        badBet: details.badBet,
+        counterPlay: details.counterPlay,
+        rankGap: details.rankGap,
+        mission: details.nextMission,
         routeTracks: [...state.routeTracks],
         questionIds: state.answers.map((answer) => answer.questionId),
       };
@@ -317,6 +343,11 @@
       elements.resultDescription.textContent = details.description;
       elements.resultMeeting.textContent = details.meetingBehavior;
       elements.resultMission.textContent = details.nextMission;
+      const rankAsset = getRankAsset(rank.id);
+      elements.resultRankEmblem.querySelector('img').src = rankAsset.assetPath;
+      elements.resultRankEmblem.querySelector('img').alt = `${rank.tier}段位徽章`;
+      renderPokerInsights(details);
+      renderResultGrowthTasks(details.growthTasks);
       renderList(elements.resultStrengths, details.strengths);
       renderList(elements.resultPitfalls, details.pitfalls);
       renderList(elements.resultAdvice, details.advice);
@@ -326,10 +357,55 @@
       drawRadar(elements.radarCanvas, result.dimensions);
       renderComparison(result.dimensions, previous && previous.dimensions);
 
-      state.currentResult = { ...result, rank, badges, quote: details.quote };
+      state.currentResult = {
+        ...result,
+        rank,
+        badges,
+        quote: details.quote,
+        pokerStyle: details.pokerStyle,
+        signatureMove: details.signatureMove,
+        hiddenCard: details.hiddenCard,
+        badBet: details.badBet,
+        counterPlay: details.counterPlay,
+        rankGap: details.rankGap,
+        mission: details.nextMission,
+      };
       if (shouldSave) {
         state.history = storageApi.saveResult(localStore, state.currentResult);
+        state.growth = growthCore.syncBaseline(state.growth, rank.id);
+        storageApi.saveGrowth(localStore, state.growth);
+        renderGrowth();
       }
+    }
+
+    function getRankAsset(rankId) {
+      return rankAssets.find((item) => item.id === Number(rankId)) || rankAssets[0];
+    }
+
+    function renderPokerInsights(details) {
+      const rows = [
+        ['你的打法', details.pokerStyle],
+        ['招牌动作', details.signatureMove],
+        ['隐藏底牌', details.hiddenCard],
+        ['容易下错的注', details.badBet],
+        ['反制牌', details.counterPlay],
+      ];
+      elements.pokerInsightList.replaceChildren();
+      rows.forEach(([label, value]) => {
+        const item = document.createElement('article');
+        item.className = 'poker-insight-item';
+        item.innerHTML = `<span>${escapeHtml(label)}</span><p>${escapeHtml(value)}</p>`;
+        elements.pokerInsightList.append(item);
+      });
+    }
+
+    function renderResultGrowthTasks(tasks) {
+      elements.resultGrowthTasks.replaceChildren();
+      (tasks || []).slice(0, 3).forEach((task, index) => {
+        const item = document.createElement('p');
+        item.innerHTML = `<span>${String(index + 1).padStart(2, '0')}</span>${escapeHtml(task)}`;
+        elements.resultGrowthTasks.append(item);
+      });
     }
 
     function renderList(element, items) {
@@ -437,9 +513,10 @@
     function renderHomeRanks() {
       elements.homeRankList.replaceChildren();
       content.HOME_RANK_EXAMPLES.forEach((rank) => {
+        const asset = getRankAsset(rank.id);
         const item = document.createElement('article');
         item.className = 'rank-teaser';
-        item.innerHTML = `<span>LV.${String(rank.id).padStart(2, '0')}</span><h3>${escapeHtml(rank.name)}</h3><p>${escapeHtml(rank.profile)}</p>`;
+        item.innerHTML = `<img src="${asset.assetPath}" alt="" /><span>${escapeHtml(rank.tier)} / LV.${String(rank.id).padStart(2, '0')}</span><h3>${escapeHtml(rank.name)}</h3><p>${escapeHtml(rank.profile)}</p>`;
         elements.homeRankList.append(item);
       });
     }
@@ -447,11 +524,83 @@
     function renderRankGallery() {
       elements.rankGallery.replaceChildren();
       content.RANK_DETAILS.forEach((rank) => {
+        const asset = getRankAsset(rank.id);
         const item = document.createElement('article');
         item.className = 'rank-dossier';
-        item.innerHTML = `<div class="rank-index"><span>LV.${String(rank.id).padStart(2, '0')}</span><i></i></div><div><p>${escapeHtml(rank.profile)}</p><h2>${escapeHtml(rank.name)}</h2><blockquote>${escapeHtml(rank.quote)}</blockquote><div class="rank-detail-grid"><p><b>会议状态</b>${escapeHtml(rank.meetingBehavior)}</p><p><b>晋级任务</b>${escapeHtml(rank.nextMission)}</p></div></div>`;
+        item.innerHTML = `<div class="rank-index"><img class="rank-emblem" src="${asset.assetPath}" alt="${escapeHtml(rank.tier)}段位徽章" /><span>${escapeHtml(rank.tier)} / LV.${String(rank.id).padStart(2, '0')}</span><i></i></div><div><p>${escapeHtml(rank.profile)}</p><h2>${escapeHtml(rank.name)}</h2><blockquote>${escapeHtml(rank.quote)}</blockquote><div class="rank-detail-grid"><p><b>牌桌打法</b>${escapeHtml(rank.pokerStyle)}</p><p><b>晋级任务</b>${escapeHtml(rank.nextMission)}</p></div></div>`;
         elements.rankGallery.append(item);
       });
+    }
+
+    function renderGrowth() {
+      const persistedGrowth = storageApi.loadGrowth(localStore);
+      if (persistedGrowth) state.growth = persistedGrowth;
+      const latest = state.history[0];
+      const baselineRankId = latest ? Number(latest.rankId || (latest.rank && latest.rank.id)) : 1;
+      if (!state.growth) state.growth = growthCore.createGrowthState(baselineRankId);
+      const rank = core.RANKS.find((item) => item.id === state.growth.rankId) || core.RANKS[0];
+      const asset = getRankAsset(rank.id);
+      elements.growthRankEmblem.src = asset.assetPath;
+      elements.growthRankEmblem.alt = `${rank.tier}段位徽章`;
+      elements.growthTier.textContent = `${rank.tier} / LV.${String(rank.id).padStart(2, '0')}`;
+      elements.growthRankName.textContent = rank.name;
+      elements.growthXpFill.style.width = `${Math.min(100, Number(state.growth.xp) || 0)}%`;
+      elements.growthXpLabel.textContent = rank.id === 8 ? '王者牌桌已解锁' : `${Number(state.growth.xp) || 0} / 100 XP`;
+      const dimensions = latest && latest.dimensions ? latest.dimensions : { decode: 50, context: 50, culture: 50, filter: 50, translate: 50 };
+      const selected = growthCore.recommendMissions(growthMissions, dimensions, state.growth.completedMissionIds, 3);
+      elements.missionList.replaceChildren();
+      selected.forEach((mission, index) => {
+        const item = document.createElement('article');
+        item.className = 'mission-card';
+        item.innerHTML = `<div class="mission-card-top"><span>HAND ${String(index + 1).padStart(2, '0')}</span><b>${escapeHtml(mission.ante)}</b></div><p>${escapeHtml(core.DIMENSIONS[mission.dimension].label)}</p><h2>${escapeHtml(mission.title)}</h2><div class="mission-card-copy">${escapeHtml(mission.action)}</div><button class="button button-ghost" type="button">接下这手</button>`;
+        item.querySelector('button').addEventListener('click', () => openMission(mission));
+        elements.missionList.append(item);
+      });
+      if (!selected.length) {
+        elements.missionList.innerHTML = '<div class="mission-empty"><strong>今日牌局已清桌</strong><p>重新测评会按最新弱项补一桌新牌。</p></div>';
+      }
+    }
+
+    function openMission(mission) {
+      state.activeMission = mission;
+      elements.missionAnte.textContent = `${mission.ante} / ${core.DIMENSIONS[mission.dimension].label}`;
+      elements.missionTitle.textContent = mission.title;
+      elements.missionScenario.textContent = mission.scenario;
+      elements.missionAction.textContent = mission.action;
+      elements.missionFeedback.textContent = mission.proof;
+      elements.missionOptions.replaceChildren();
+      elements.completeMissionButton.disabled = mission.type === 'challenge';
+      elements.completeMissionButton.textContent = mission.type === 'field' ? '我已完成，结算 20 XP' : '答对后结算 35 XP';
+      (mission.options || []).forEach((option) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'mission-option';
+        button.textContent = option[0];
+        button.addEventListener('click', () => {
+          [...elements.missionOptions.children].forEach((child) => child.classList.remove('is-correct', 'is-wrong'));
+          button.classList.add(option[1] ? 'is-correct' : 'is-wrong');
+          elements.missionFeedback.textContent = option[2];
+          elements.completeMissionButton.disabled = !option[1];
+          elements.completeMissionButton.textContent = option[1] ? '完成这手牌' : '再看一眼牌面';
+        });
+        elements.missionOptions.append(button);
+      });
+      setModal(elements.missionModal, true);
+    }
+
+    function completeActiveMission() {
+      if (!state.activeMission) return;
+      const outcome = growthCore.completeMission(state.growth, state.activeMission);
+      state.growth = outcome.state;
+      storageApi.saveGrowth(localStore, state.growth);
+      setModal(elements.missionModal, false);
+      renderGrowth();
+      if (outcome.rankUp) {
+        const rank = core.RANKS.find((item) => item.id === state.growth.rankId) || core.RANKS[0];
+        elements.rankUpEmblem.src = getRankAsset(rank.id).assetPath;
+        elements.rankUpName.textContent = `${rank.tier} · ${rank.name}`;
+        setModal(elements.rankUpModal, true);
+      }
     }
 
     function renderGlossaryFilters() {

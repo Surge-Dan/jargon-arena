@@ -13,12 +13,13 @@ test('provides eight complete rank dossiers', () => {
   assert.equal(content.RANK_DETAILS.length, 8);
   content.RANK_DETAILS.forEach((rank, index) => {
     assert.equal(rank.id, index + 1);
-    ['name', 'profile', 'description', 'meetingBehavior', 'nextMission', 'quote'].forEach((field) => {
+    ['name', 'tier', 'profile', 'description', 'meetingBehavior', 'nextMission', 'quote', 'pokerStyle', 'signatureMove', 'hiddenCard', 'badBet', 'counterPlay', 'rankGap'].forEach((field) => {
       assert.ok(rank[field], `rank ${rank.id} should include ${field}`);
     });
     ['strengths', 'pitfalls', 'advice', 'environment'].forEach((field) => {
       assert.ok(Array.isArray(rank[field]) && rank[field].length >= 2, `rank ${rank.id} should include ${field}`);
     });
+    assert.ok(Array.isArray(rank.growthTasks) && rank.growthTasks.length >= 3, `rank ${rank.id} should include growthTasks`);
   });
 });
 

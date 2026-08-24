@@ -332,5 +332,55 @@
     },
   ];
 
-  root.QuizQuestionBank = rawQuestions.map(makeQuestion);
+  // 扩展牌库：覆盖真实职场语境，并为复测提供足够的差异化抽题空间。
+  function expansion(config) {
+    return {
+      id: config.id,
+      stage: config.stage,
+      dimension: config.dimension,
+      difficulty: config.difficulty || 'standard',
+      categoryLabel: config.categoryLabel,
+      stem: config.stem,
+      explanation: config.explanation,
+      related: config.related || [],
+      choices: [
+        [config.literal, '只接住了字面，牌桌信息还没翻开。', 0],
+        [config.echo, '术语原样打回，声音很响但没有推进。', 1],
+        [config.partial, '方向基本对，再补一张行动牌就完整了。', 3],
+        [config.correct, '语义、语境和行动都落桌了。', 4, config.extras || {}],
+      ],
+    };
+  }
+
+  const expandedQuestions = [
+    expansion({ id: 'cal-decode-03', stage: 'calibration', dimension: 'decode', categoryLabel: '术语校准', stem: '“把颗粒度再往下拆一层”真正要你做什么？', explanation: '颗粒度描述信息细致层级，必须明确拆到哪种可验收单位。', literal: '把表格字号调小', echo: '进一步细化颗粒度', partial: '把任务写得更具体', correct: '拆到可分配、可估时、可验收的最小任务', extras: { translate: 4 } }),
+    expansion({ id: 'cal-context-03', stage: 'calibration', dimension: 'context', categoryLabel: '语境校准', stem: '领导回复“你先按自己的理解推进”，最稳妥的动作是？', explanation: '这通常意味着授权伴随风险，需要用书面假设锁住边界。', literal: '完全自由发挥', echo: '先推进再对齐', partial: '写下自己的理解', correct: '发出目标、范围和风险假设，确认后按节点推进', extras: { filter: 3, translate: 4 } }),
+    expansion({ id: 'cal-filter-03', stage: 'calibration', dimension: 'filter', categoryLabel: '废话校准', stem: '“打一套品效合一的组合拳”缺的第一张牌是什么？', explanation: '组合拳要有共同目标、动作关系和衡量方式。', literal: '拳法名称', echo: '更完整的组合拳', partial: '列出准备做的活动', correct: '明确共同目标、动作顺序和统一效果指标', extras: { decode: 3 } }),
+    expansion({ id: 'cal-translate-03', stage: 'calibration', dimension: 'translate', categoryLabel: '人话校准', stem: '把“赋能一线”翻成可验收任务，哪句最好？', explanation: '赋能要说清对象、能力、方式和结果。', literal: '给一线加油', echo: '持续做好赋能', partial: '给一线做培训', correct: '本周培训门店使用新工具，并以独立完成率验收', extras: { filter: 4 } }),
+
+    expansion({ id: 'decode-06', stage: 'branch', dimension: 'decode', difficulty: 'foundation', categoryLabel: '术语破译', stem: '“沉淀最佳实践”至少需要什么？', explanation: '实践可复用必须包含适用条件、步骤和证据。', literal: '把聊天截图存下来', echo: '形成实践沉淀', partial: '写一份经验文档', correct: '记录适用场景、关键步骤、效果证据与禁用条件', extras: { filter: 3 } }),
+    expansion({ id: 'decode-07', stage: 'branch', dimension: 'decode', difficulty: 'advanced', categoryLabel: '术语破译', stem: '“组织势能不足”最可能掩盖什么？', explanation: '抽象势能常把人、权、流程或信息问题揉成一团。', literal: '办公室楼层不够高', echo: '组织能量需要提升', partial: '团队能力不足', correct: '需要拆查缺人、缺权、缺流程还是缺信息', extras: { filter: 4 } }),
+    expansion({ id: 'decode-08', stage: 'branch', dimension: 'decode', difficulty: 'advanced', categoryLabel: '术语破译', stem: '真正的“端到端负责人”应该拥有什么？', explanation: '端到端责任需要跨环节可见性、协调权和结果责任。', literal: '坐在工位最边上', echo: '拥有端到端意识', partial: '负责跟进全部群聊', correct: '看见全链路、协调关键依赖并对最终结果负责', extras: { context: 3 } }),
+    expansion({ id: 'context-06', stage: 'branch', dimension: 'context', difficulty: 'foundation', categoryLabel: '语境读牌', stem: '评审里听到“方向没问题，细节再打磨”，下一句该问什么？', explanation: '方向通过不等于方案通过，需要找出阻塞上线的具体细节。', literal: '那就是通过了', echo: '我们继续打磨细节', partial: '哪些地方要优化', correct: '哪些问题会阻塞通过、由谁在何时确认', extras: { translate: 4 } }),
+    expansion({ id: 'context-07', stage: 'branch', dimension: 'context', difficulty: 'advanced', categoryLabel: '语境读牌', stem: '跨部门说“资源确实比较紧张”，通常应该确认什么？', explanation: '资源紧张可能是拒绝，也可能是等待优先级授权。', literal: '对方最近很忙', echo: '理解资源紧张', partial: '什么时候有空', correct: '是无法承接、需要换优先级，还是要补决策人授权', extras: { filter: 3 } }),
+    expansion({ id: 'context-08', stage: 'branch', dimension: 'context', difficulty: 'advanced', categoryLabel: '语境读牌', stem: '老板问“这个方案你自己有信心吗”，高质量回答是？', explanation: '信心题背后常是证据、风险和承诺边界。', literal: '有，必须有', echo: '整体方向有信心', partial: '说出成功概率', correct: '说明已有证据、最大风险和下一步验证节点', extras: { filter: 4, translate: 3 } }),
+    expansion({ id: 'culture-06', stage: 'branch', dimension: 'culture', difficulty: 'foundation', categoryLabel: '梗文化考古', stem: '“已读乱回”为什么会成为职场梗？', explanation: '它讽刺形式上响应、实质上没有理解上下文。', literal: '消息软件坏了', echo: '回复方式很抽象', partial: '回答得不够准确', correct: '看似及时响应，实际没接住问题和上下文', extras: { context: 3 } }),
+    expansion({ id: 'culture-07', stage: 'branch', dimension: 'culture', difficulty: 'advanced', categoryLabel: '梗文化考古', stem: '“活人感”在职场内容里通常反抗什么？', explanation: '活人感反抗过度包装、标准化与无瑕疵表演。', literal: '同事看起来没睡醒', echo: '内容要更像活人', partial: '表达更口语化', correct: '反抗过度包装和标准答案，保留真实判断与情绪', extras: { context: 3 } }),
+    expansion({ id: 'culture-08', stage: 'branch', dimension: 'culture', difficulty: 'advanced', categoryLabel: '梗文化考古', stem: '“工位渡劫”是在玩什么情绪？', explanation: '它把持续压力夸张成修炼劫难，表达疲惫与自嘲。', literal: '工位漏电', echo: '上班像修仙', partial: '今天工作很难', correct: '用夸张修仙叙事消化持续压力和不可控感', extras: { context: 3 } }),
+    expansion({ id: 'filter-06', stage: 'branch', dimension: 'filter', difficulty: 'foundation', categoryLabel: '废话鉴别', stem: '“进一步提升用户体验”为什么暂时不能开工？', explanation: '没有用户、场景、问题和验证指标。', literal: '因为体验看不见', echo: '还需继续提升体验', partial: '缺少设计稿', correct: '没说哪个用户在什么场景遇到什么问题、怎么验证改善', extras: { translate: 4 } }),
+    expansion({ id: 'filter-07', stage: 'branch', dimension: 'filter', difficulty: 'advanced', categoryLabel: '废话鉴别', stem: '“战略级项目”最需要哪种证据，而不是哪种音量？', explanation: '战略性来自取舍、资源和可验证目标。', literal: '标题用最大字号', echo: '不断强调战略意义', partial: '得到更多领导支持', correct: '明确它替代了什么、获得什么资源、用什么结果验证', extras: { context: 3 } }),
+    expansion({ id: 'filter-08', stage: 'branch', dimension: 'filter', difficulty: 'advanced', categoryLabel: '废话鉴别', stem: '一句话同时出现“抓手、闭环、赋能”，先检查什么？', explanation: '术语密度越高，越应检查行动与责任是否缺席。', literal: '是否还能加一个飞轮', echo: '概念是否足够完整', partial: '这些词用得准不准', correct: '是否存在明确对象、动作、负责人和验收结果', extras: { translate: 4 } }),
+    expansion({ id: 'translate-06', stage: 'branch', dimension: 'translate', difficulty: 'foundation', categoryLabel: '人话翻译', stem: '“拉通产研运”最好落成哪一句？', explanation: '拉通不是拉群，而是统一输入、决策和交付接口。', literal: '把三方拉进一个群', echo: '强化产研运拉通', partial: '安排三方开会', correct: '统一需求入口、决策人、交付物和变更通知方式', extras: { filter: 4 } }),
+    expansion({ id: 'translate-07', stage: 'branch', dimension: 'translate', difficulty: 'advanced', categoryLabel: '人话翻译', stem: '“扩大品牌声量”如何改成实验？', explanation: '声量需要明确人群、触点、行为指标和周期。', literal: '把音量开大', echo: '持续扩大声量', partial: '多发一些内容', correct: '面向目标人群投放两类内容，用搜索与收藏增量比较效果', extras: { filter: 4 } }),
+    expansion({ id: 'translate-08', stage: 'branch', dimension: 'translate', difficulty: 'advanced', categoryLabel: '人话翻译', stem: '“提升复盘质量”最像行动项的是？', explanation: '复盘要从感想会变成事实、假设、动作和验证。', literal: '把复盘写长一点', echo: '持续优化复盘机制', partial: '增加复盘会议', correct: '按事实、原因、下次动作和负责人固定模板，并跟踪动作完成率', extras: { filter: 4 } }),
+
+    expansion({ id: 'boss-05', stage: 'boss', dimension: 'decode', difficulty: 'advanced', categoryLabel: '综合 Boss', stem: '方案称“用 AI 赋能全链路，打造第二增长曲线”，你如何亮牌？', explanation: '技术、链路和增长都必须回到场景与证据。', literal: '先采购最贵模型', echo: '形成 AI 赋能闭环', partial: '挑一个 AI 场景试试', correct: '锁定具体用户任务、当前成本、试验指标和停止条件', extras: { context: 4, filter: 4, translate: 4 } }),
+    expansion({ id: 'boss-06', stage: 'boss', dimension: 'context', difficulty: 'advanced', categoryLabel: '综合 Boss', stem: '会上三方都说“可以配合”，项目却没人启动，怎么破局？', explanation: '配合不是承诺，必须明确主责、依赖与决策。', literal: '再感谢一次大家支持', echo: '持续拉通形成合力', partial: '拉一个更大的群', correct: '指定唯一主责，逐项确认交付物、依赖和截止时间', extras: { filter: 4, translate: 4 } }),
+
+    expansion({ id: 'playoff-decode-2', stage: 'playoff', dimension: 'decode', difficulty: 'advanced', categoryLabel: '晋级赛', stem: '“生态”成立的关键，不是哪一项？', explanation: '生态不是伙伴名单，而是多方持续交换价值。', literal: '合作方 Logo 足够多', echo: '生态概念足够宏大', partial: '参与方数量增长', correct: '各方有持续交换的价值、规则与留下来的理由', extras: { filter: 3 } }),
+    expansion({ id: 'playoff-filter-2', stage: 'playoff', dimension: 'filter', difficulty: 'advanced', categoryLabel: '晋级赛', stem: '“降本增效”不沦为空话，必须同时说清什么？', explanation: '不能只报节省，还要说明代价、质量护栏和效果。', literal: '口号要足够坚定', echo: '持续推进降本增效', partial: '计划节省多少预算', correct: '减少什么成本、影响什么质量、由什么指标守住底线', extras: { translate: 4 } }),
+    expansion({ id: 'playoff-translate-2', stage: 'playoff', dimension: 'translate', difficulty: 'advanced', categoryLabel: '晋级赛', stem: '把“形成业务增长合力”翻成一句可签字的话？', explanation: '合力要落到分工、共同指标和接口。', literal: '大家一起用力', echo: '共同形成增长合力', partial: '各团队完成自己的任务', correct: '市场负责获客、产品负责转化，共同以新增付费率验收', extras: { filter: 4, context: 3 } }),
+  ];
+
+  root.QuizQuestionBank = [...rawQuestions, ...expandedQuestions].map(makeQuestion);
 })(typeof globalThis !== 'undefined' ? globalThis : this);

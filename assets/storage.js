@@ -8,6 +8,7 @@
   root.QuizStorage = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function createQuizStorage() {
   const HISTORY_KEY = 'jargon-arena-history-v2';
+  const GROWTH_KEY = 'jargon-arena-growth-v1';
   const HISTORY_LIMIT = 8;
 
   function loadHistory(storage) {
@@ -44,6 +45,26 @@
     }
   }
 
+  function loadGrowth(storage) {
+    if (!storage || typeof storage.getItem !== 'function') return null;
+    try {
+      const parsed = JSON.parse(storage.getItem(GROWTH_KEY) || 'null');
+      return parsed && typeof parsed === 'object' && Number.isFinite(Number(parsed.rankId)) ? parsed : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  function saveGrowth(storage, progress) {
+    if (!storage || typeof storage.setItem !== 'function' || !progress || typeof progress !== 'object') return null;
+    try {
+      storage.setItem(GROWTH_KEY, JSON.stringify(progress));
+      return progress;
+    } catch (_error) {
+      return null;
+    }
+  }
+
   function getSeenQuestionIds(history) {
     const ids = new Set();
     (Array.isArray(history) ? history : []).forEach((record) => {
@@ -62,11 +83,14 @@
 
   return {
     HISTORY_KEY,
+    GROWTH_KEY,
     HISTORY_LIMIT,
     clearHistory,
     compareDimensions,
     getSeenQuestionIds,
     loadHistory,
+    loadGrowth,
     saveResult,
+    saveGrowth,
   };
 });

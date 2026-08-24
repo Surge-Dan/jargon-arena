@@ -8,14 +8,17 @@
     <link rel="stylesheet" href="./assets/style.css" />
     <script src="./assets/quiz-core.js" defer></script>
     <script src="./assets/question-bank.js" defer></script>
+    <script src="./assets/rank-assets.js" defer></script>
+    <script src="./assets/growth-data.js" defer></script>
+    <script src="./assets/growth-core.js" defer></script>
     <script src="./assets/content-data.js" defer></script>
     <script src="./assets/storage.js" defer></script>
     <script src="./assets/poster.js" defer></script>
     <script src="./assets/main.js" defer></script>
   </head>
   <body>
+    <div class="viewport-top-rail" aria-hidden="true"></div>
     <div class="app-shell">
-      <div class="scan-line" aria-hidden="true"></div>
       <header class="topbar">
         <button class="brand-lockup nav-button" type="button" data-screen="home" aria-label="返回首页">
           <span class="brand-mark" aria-hidden="true">译</span>
@@ -23,6 +26,7 @@
         </button>
         <nav class="top-nav" aria-label="工具导航">
           <button type="button" data-screen="ranks">段位图鉴</button>
+          <button type="button" data-screen="growth">成长牌局</button>
           <button type="button" data-screen="glossary">黑话词典</button>
           <button type="button" data-screen="history">测评记录</button>
         </nav>
@@ -31,12 +35,27 @@
       <main id="app" class="app-main">
         <section id="home-screen" class="screen screen-home is-active" aria-labelledby="home-title">
           <div class="hero-copy">
-            <p class="eyebrow">互联网语境扫描 / 本地离线运行</p>
-            <h1 id="home-title">你在黑话江湖，<br /><em>混到第几段？</em></h1>
-            <p class="hero-lede">不是测你有多“班味”。这里考的是：能不能听懂热梗、拆穿空话，再把会议语言翻译成今天能做的事。</p>
+            <p class="eyebrow">JARGON HOLD'EM / 黑话德州桌</p>
+            <h1 id="home-title">黑话上桌，<br /><em>人话收池。</em></h1>
+            <p class="hero-lede">不测班味，只看你能不能认牌、读人、拆穿空气筹码，再把“抓手闭环组合拳”翻成今天能做的事。</p>
             <div class="hero-actions">
-              <button id="start-button" class="button button-primary" type="button">开始段位扫描 <span aria-hidden="true">↗</span></button>
-              <span>13–15 题 · 会根据答案动态换题</span>
+              <button id="start-button" class="button button-primary" type="button">快速测段位 <span aria-hidden="true">♠</span></button>
+              <button id="growth-entry-button" class="button button-ghost" type="button" data-screen="growth">进入成长牌局</button>
+              <span>13–15 题动态发牌 · 所有记录只留本机</span>
+            </div>
+          </div>
+
+          <div class="poker-stage" aria-label="四位玩家正在黑话牌桌上出牌">
+            <div class="room-sign"><span>桌号 0824</span><b>最高段位，不是梭哈黑话</b></div>
+            <div class="poker-table">
+              <span class="felt-copy">JARGON<br />HOLD'EM</span>
+              <div class="player-seat seat-north"><i></i><span>战略哥</span></div>
+              <div class="player-seat seat-east"><i></i><span>闭环姐</span></div>
+              <div class="player-seat seat-south"><i></i><span>人话位</span></div>
+              <div class="player-seat seat-west"><i></i><span>抓手王</span></div>
+              <div class="dealer-button">D</div>
+              <div class="dealt-card card-a">抓手</div><div class="dealt-card card-b">闭环</div><div class="dealt-card card-c">人话</div>
+              <div class="chip-stack chips-a"></div><div class="chip-stack chips-b"></div>
             </div>
           </div>
 
@@ -68,6 +87,16 @@
           </section>
         </section>
 
+        <section id="growth-screen" class="screen screen-library growth-screen" aria-labelledby="growth-title" hidden>
+          <div class="growth-hero">
+            <div><p class="eyebrow">RANKED TABLE / 本地成长局</p><h1 id="growth-title">把会听懂，<br />也把段位打上去。</h1><p>测评给你一张当前段位证；成长牌局用任务筹码升级。线下任务由你自证，不假装替你验证真实能力。</p></div>
+            <div class="growth-rank-card"><img id="growth-rank-emblem" alt="当前成长段位徽章" /><span id="growth-tier">未定级</span><strong id="growth-rank-name">等待首局定级</strong><div class="xp-track"><i id="growth-xp-fill"></i></div><small id="growth-xp-label">0 / 100 XP</small></div>
+          </div>
+          <div class="section-heading"><div><p class="eyebrow">TODAY'S HAND / 三手推荐牌</p><h2>优先补你的弱项</h2></div><button class="text-button" type="button" data-start-quiz>重新定级 →</button></div>
+          <div id="mission-list" class="mission-list"></div>
+          <section class="growth-rules"><h2>晋级规则</h2><ol><li>挑战题首答正确，赢 35 XP</li><li>真实场景练习，自我确认得 20 XP</li><li>每满 100 XP 晋升一段，溢出筹码保留</li></ol></section>
+        </section>
+
         <section id="quiz-screen" class="screen screen-quiz" aria-labelledby="quiz-title" hidden>
           <div class="quiz-status">
             <div><p id="question-phase" class="phase-label">基础校准</p><p id="phase-note">先测一圈，看看你的黑话雷达偏向哪里。</p></div>
@@ -96,6 +125,7 @@
 
         <section id="report-screen" class="screen screen-report" aria-labelledby="result-rank-name" hidden>
           <div class="report-hero">
+            <div id="result-rank-emblem" class="result-rank-emblem"><img alt="本次段位徽章" /></div>
             <div class="report-title-block">
               <p class="eyebrow">本轮通关报告 / <span id="result-record-code">LOCAL</span></p>
               <p id="result-level" class="result-level">LV.01</p>
@@ -126,6 +156,15 @@
               <div class="report-section-head"><span>04</span><h3 id="advice-title">人话处方</h3></div>
               <div class="split-lists"><div><h4>下一步建议</h4><ul id="result-advice"></ul></div><div><h4>适配环境</h4><ul id="result-environment"></ul></div></div>
               <div class="next-mission"><span>NEXT MISSION</span><p id="result-mission"></p></div>
+            </section>
+            <section class="report-section poker-report-section" aria-labelledby="poker-report-title">
+              <div class="report-section-head"><span>05</span><h3 id="poker-report-title">牌桌读法</h3></div>
+              <div id="poker-insight-list" class="poker-insight-list"></div>
+            </section>
+            <section class="report-section growth-preview-section" aria-labelledby="growth-preview-title">
+              <div class="report-section-head"><span>06</span><h3 id="growth-preview-title">晋级三手牌</h3></div>
+              <div id="result-growth-tasks" class="result-growth-tasks"></div>
+              <button class="button button-ghost" type="button" data-screen="growth">带着报告进入成长牌局</button>
             </section>
             <section id="comparison-section" class="report-section comparison-section" aria-labelledby="comparison-title" hidden>
               <div class="report-section-head"><span>05</span><h3 id="comparison-title">与上次相比</h3></div>
@@ -180,6 +219,21 @@
     <div id="confirm-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title" hidden>
       <div class="modal-backdrop" data-cancel-clear></div>
       <section class="modal-panel confirm-panel"><p class="eyebrow">LOCAL RECORDS</p><h2 id="confirm-title">确定清空所有记录？</h2><p>这个动作只影响当前设备，清空后无法恢复。</p><div class="modal-actions"><button class="button button-ghost" type="button" data-cancel-clear>先留着</button><button id="confirm-clear-button" class="button button-danger" type="button">确认清空</button></div></section>
+    </div>
+
+    <div id="mission-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="mission-title" hidden>
+      <div class="modal-backdrop" data-close-mission></div>
+      <section class="modal-panel mission-panel">
+        <button class="modal-close" type="button" aria-label="关闭任务" data-close-mission>×</button>
+        <p id="mission-ante" class="eyebrow"></p><h2 id="mission-title">任务牌</h2><p id="mission-scenario"></p><p id="mission-action" class="mission-action"></p>
+        <div id="mission-options" class="mission-options"></div><p id="mission-feedback" class="modal-feedback" aria-live="polite"></p>
+        <button id="complete-mission-button" class="button button-primary" type="button" disabled>完成这手牌</button>
+      </section>
+    </div>
+
+    <div id="rank-up-modal" class="modal rank-up-modal" role="dialog" aria-modal="true" aria-labelledby="rank-up-title" hidden>
+      <div class="modal-backdrop rank-up-backdrop"></div>
+      <section class="modal-panel rank-up-panel"><div class="rank-burst" aria-hidden="true"></div><p class="eyebrow">RANK UP / 晋级翻牌</p><img id="rank-up-emblem" alt="新段位徽章" /><h2 id="rank-up-title">筹码过线</h2><strong id="rank-up-name"></strong><p>不是黑话说得更多，而是更会选择什么时候说人话。</p><button id="close-rank-up-button" class="button button-primary" type="button">收下新段位</button></section>
     </div>
   </body>
 </html>
